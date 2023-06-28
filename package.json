@@ -9,10 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@chakra-ui/next-js": "^2.1.4",
+    "@chakra-ui/react": "^2.7.1",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "argon2": "^0.30.3",
+    "axios": "^1.4.0",
+    "blakejs": "^1.2.1",
     "eslint": "8.43.0",
     "eslint-config-next": "13.4.7",
+    "formik": "^2.4.2",
+    "framer-motion": "^10.12.17",
     "next": "13.4.7",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "react-icons": "^4.10.1",
+    "yup": "^1.2.0"
   }
 }

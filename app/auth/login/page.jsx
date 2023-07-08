@@ -38,7 +38,7 @@ export default function Login() {
       });
 
       localStorage.setItem('accessToken', data.accessToken);
-      router.push('/');
+      // router.push('/');
     } catch (error) {
       toast({
         title: "Error",

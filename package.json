@@ -13,17 +13,31 @@
     "@chakra-ui/react": "^2.7.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@microsoft/fetch-event-source": "^2.0.1",
+    "@nytimes/react-prosemirror": "^0.2.3",
     "argon2": "^0.30.3",
     "axios": "^1.4.0",
     "blakejs": "^1.2.1",
+    "dexie": "^3.2.4",
+    "dexie-react-hooks": "^1.1.6",
     "eslint": "8.43.0",
     "eslint-config-next": "13.4.7",
     "formik": "^2.4.2",
-    "framer-motion": "^10.12.17",
+    "framer-motion": "^10.12.18",
+    "lodash": "^4.17.21",
     "next": "13.4.7",
+    "pako": "^2.1.0",
+    "prosemirror-schema-basic": "^1.2.2",
+    "prosemirror-state": "^1.4.3",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-icons": "^4.10.1",
+    "recoil": "^0.7.7",
+    "recoil-persist": "^5.1.0",
+    "tweetnacl": "^1.0.3",
     "yup": "^1.2.0"
+  },
+  "devDependencies": {
+    "next-transpile-modules": "^10.0.0"
   }
 }

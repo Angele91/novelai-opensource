@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {}
+const withTM = require('next-transpile-modules')(['@nytimes/react-prosemirror']);
 
-module.exports = nextConfig
+module.exports = withTM(nextConfig);

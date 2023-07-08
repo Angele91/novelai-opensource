@@ -2,21 +2,74 @@ import updateStory from "@/lib/stories/updateStory"
 import { Box, Card, CardBody, Flex, Input, Textarea } from "@chakra-ui/react"
 import { ProseMirror } from "@nytimes/react-prosemirror"
 import { EditorState } from "prosemirror-state"
-import { useState } from "react"
-import { schema } from "prosemirror-schema-basic"
+import { useEffect, useState } from "react"
+import { marks, nodes } from "prosemirror-schema-basic"
 import { BreaklineWidget } from "./BreaklineWidget"
+import { useRecoilState } from "recoil"
+import { Schema } from "prosemirror-model";
+import { preferencesAtom } from "@/state/atoms/preferences"
+import { KeybindingWidget } from "./KeybindingsWidget"
+import { generateStory } from "@/lib/novelai/generation"
+import { useLiveQuery } from "dexie-react-hooks"
+import getPresets from "@/lib/presets/getPresets"
+import { first } from "lodash"
 
-export const Editor = ({ story }) => {
+const schema = new Schema({
+  nodes,
+  marks
+})
+
+export const Editor = ({ story, content, onChange }) => {
   const [mount, setMount] = useState();
   const [prompt, setPrompt] = useState('');
+  const [preferences] = useRecoilState(preferencesAtom);
+  const presets = useLiveQuery(async () => getPresets(), [])
+
   const [editorState, setEditorState] = useState(
     EditorState.create({
       schema,
+      doc: content ? schema.nodeFromJSON(content) : undefined,
     })
   )
 
   const onTransaction = (transaction) => {
     setEditorState((state) => state.apply(transaction))
+  }
+
+  useEffect(() => {
+    onChange?.(editorState.toJSON())
+  }, [editorState])
+
+  const onRequestGeneration = (text) => {
+    const currentTxt = text || editorState.doc.textContent;
+    const currentPreset = presets.find(preset => preset.id === preferences.selectedPresetId);
+
+    generateStory({
+      prompt: currentTxt,
+      model: preferences.selectedModel,
+      params: (currentPreset || first(presets)).parameters,
+      onToken({ token }) {
+        setEditorState((state) => {
+          const { tr, selection } = state;
+          tr.insertText(token, selection.from);
+          return state.apply(tr)
+        })
+      }
+    })
+  }
+
+  const onPromptSent = (event) => {
+    if (event.key !== 'Enter') return;
+
+    setEditorState((state) => {
+      const { tr, selection } = state;
+      tr.insertText(prompt, selection.from);
+      const newState = state.apply(tr)
+      onRequestGeneration(newState.doc.textContent);
+      return newState;
+    })
+
+    setPrompt('');
   }
 
   return (
@@ -34,11 +87,17 @@ export const Editor = ({ story }) => {
             dispatchTransaction={onTransaction}
           >
             <BreaklineWidget onTransaction={onTransaction} />
+            <KeybindingWidget onRequestGeneration={onRequestGeneration}  />
             <Box whiteSpace="pre-wrap" outline="none" h="full" ref={setMount} />
           </ProseMirror>
         </CardBody>
       </Card>
-      <Textarea value={prompt} onChange={({ target: { value } }) => setPrompt(value)} />
+      <Textarea
+        value={prompt}
+        onChange={({ target: { value } }) => setPrompt(value)}
+        placeholder="Type your prompt here."
+        onKeyDown={onPromptSent}
+      />
     </Flex>
   )
 }

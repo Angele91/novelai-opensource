@@ -3,16 +3,17 @@ import { useDisclosure } from "@chakra-ui/hooks";
 import { Flex } from "@chakra-ui/layout";
 import { motion } from "framer-motion";
 import { BsChevronLeft, BsChevronRight } from "react-icons/bs";
-import { StoryList } from "../StoryList";
 
-export default function Sidebar() {
+export default function Sidebar({
+  side = 'left',
+  children,
+}) {
   const { isOpen: isSidebarOpen, getButtonProps } = useDisclosure({
     defaultIsOpen: true
   });
 
   return (
     <Flex
-      bgColor="InfoBackground"
       as={motion.div}
       animate={{ width: isSidebarOpen ? '300px' : '60px' }}
       transition="0.5 linear"
@@ -20,19 +21,24 @@ export default function Sidebar() {
       flexDir="column"
       pt={2}
       pb={2}
-      px={isSidebarOpen ? 2 : 0}
+      px={2}
       alignItems={isSidebarOpen ? undefined : 'center'}
       gap={2}
     >
       <Flex
-        justify="flex-end"
+        justify={side === 'left' ? "flex-end" : 'flex-start'}
       >
         <IconButton
-          icon={isSidebarOpen ? <BsChevronLeft /> : <BsChevronRight />}
+          icon={
+            isSidebarOpen ? (
+              side === 'left' ? <BsChevronLeft /> : <BsChevronRight />
+            ) : (
+              side === 'left' ? <BsChevronRight /> : <BsChevronLeft />
+            )}
           {...getButtonProps()}
         />
       </Flex>
-      <StoryList isSidebarOpen={isSidebarOpen} />
+      {typeof children === 'function' ? children({ isSidebarOpen }) : children}
     </Flex>
   )
 }

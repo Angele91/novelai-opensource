@@ -1,11 +1,22 @@
 import deleteStory from "@/lib/stories/deleteStory";
+import { preferencesAtom } from "@/state/atoms/preferences";
 import { Box, Card, CardBody, Flex, IconButton, Stack, StackDivider, Text } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { BsBook, BsTrash } from "react-icons/bs";
+import { useRecoilState } from "recoil";
 
 export const StoryListItem = ({ story, isSidebarOpen }) => {
+  const [preferences, setPreferences] = useRecoilState(preferencesAtom);
+
   const onDeleteStory = async (storyId) => {
     await deleteStory(storyId);
+  }
+
+  const onClickStory = () => {
+    setPreferences((prefs) => ({
+      ...prefs,
+      selectedStoryId: story.id,
+    }))
   }
 
   return (
@@ -15,6 +26,9 @@ export const StoryListItem = ({ story, isSidebarOpen }) => {
       border={isSidebarOpen ? undefined : 'none'}
       variant="outline"
       height="120px"
+      cursor="pointer"
+      borderBottom={isSidebarOpen ? undefined : "1px solid"}
+      backgroundColor={preferences.selectedStoryId === story.id ? "InfoBackground" : undefined}
     >
       <CardBody>
         <Stack

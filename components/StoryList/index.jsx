@@ -44,13 +44,17 @@ export const StoryList = ({ isSidebarOpen }) => {
         onClick={onCreateStory}
       >
         Add Story
-      </Button> : <IconButton 
-        aria-label="Add Story"
-        variant="outline"
-        icon={<BsPlus />}
-        justifySelf="flex-end"
-        onClick={onCreateStory}
-      />}
+      </Button> : (
+        <Tooltip label="Add Story">
+          <IconButton
+            aria-label="Add Story"
+            variant="outline"
+            icon={<BsPlus />}
+            justifySelf="flex-end"
+            onClick={onCreateStory}
+          />
+        </Tooltip>
+      )}
     </Flex>
 
   )

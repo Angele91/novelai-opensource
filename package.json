@@ -24,6 +24,7 @@
     "eslint-config-next": "13.4.7",
     "formik": "^2.4.2",
     "framer-motion": "^10.12.18",
+    "jszip": "^3.10.1",
     "lodash": "^4.17.21",
     "next": "13.4.7",
     "pako": "^2.1.0",
@@ -35,6 +36,7 @@
     "recoil": "^0.7.7",
     "recoil-persist": "^5.1.0",
     "tweetnacl": "^1.0.3",
+    "uuid": "^9.0.0",
     "yup": "^1.2.0"
   },
   "devDependencies": {

@@ -3,20 +3,43 @@ import { Box, Card, CardBody, Flex, Input, Textarea } from "@chakra-ui/react"
 import { ProseMirror } from "@nytimes/react-prosemirror"
 import { EditorState } from "prosemirror-state"
 import { useEffect, useState } from "react"
-import { marks, nodes } from "prosemirror-schema-basic"
+import { nodes, marks } from "prosemirror-schema-basic"
 import { BreaklineWidget } from "./BreaklineWidget"
 import { useRecoilState } from "recoil"
-import { Schema } from "prosemirror-model";
 import { preferencesAtom } from "@/state/atoms/preferences"
 import { KeybindingWidget } from "./KeybindingsWidget"
-import { generateStory } from "@/lib/novelai/generation"
+import { generateImage, generateStory } from "@/lib/novelai/generation"
 import { useLiveQuery } from "dexie-react-hooks"
 import getPresets from "@/lib/presets/getPresets"
 import { first } from "lodash"
+import { OptionsWidget } from "./OptionsWidget"
+import { ImageModels } from "@/lib/novelai/constants"
+import { Schema } from "prosemirror-model"
+import { ImageWidget } from "./ImageWidget"
 
-const schema = new Schema({
-  nodes,
-  marks
+export const schema = new Schema({
+  nodes: nodes,
+  marks: {
+    ...marks,
+    dataImg: {
+      attrs: {
+        dataImg: {},
+      },
+      parseDOM: [{
+        tag: 'div[data-img]',
+        getAttrs: (dom) => ({
+          dataImg: dom.dataset.img,
+        }),
+      }],
+      toDOM: (node) => [
+        'div',
+        {
+          'data-img': node.attrs.dataImg,
+        },
+        0,
+      ],
+    },
+  },
 })
 
 export const Editor = ({ story, content, onChange }) => {
@@ -58,6 +81,30 @@ export const Editor = ({ story, content, onChange }) => {
     })
   }
 
+  const onRequestImageGeneration = async () => {
+    const selectionTxt = editorState.doc.textBetween(editorState.selection.from, editorState.selection.to, '\n');
+
+    const fileIds = await generateImage({
+      action: 'generate',
+      input: selectionTxt,
+      model: ImageModels.NSFW,
+    })
+
+    setEditorState((state) => {
+      const { tr } = state;
+      
+      tr.addMark(
+        state.selection.from,
+        state.selection.to,
+        schema.marks.dataImg.create({
+          dataImg: fileIds[0],
+        })
+      )
+  
+      return state.apply(tr)
+    })
+  }
+
   const onPromptSent = (event) => {
     if (event.key !== 'Enter') return;
 
@@ -79,13 +126,24 @@ export const Editor = ({ story, content, onChange }) => {
         placeholder="Your story name."
         onBlur={({ target: { value } }) => updateStory(story.id, { storyName: value })}
       />
-      <Card variant="outline" flex={1}>
+      <Card
+        variant="outline"
+        flex={1}
+        sx={{
+          '[data-img]': {
+            textDecoration: 'underline',
+            cursor: 'pointer',
+          },
+        }}
+      >
         <CardBody flex={1}>
           <ProseMirror
             mount={mount}
             state={editorState}
             dispatchTransaction={onTransaction}
           >
+            <OptionsWidget onGenerateImage={onRequestImageGeneration} />
+            <ImageWidget />
             <BreaklineWidget onTransaction={onTransaction} />
             <KeybindingWidget onRequestGeneration={onRequestGeneration}  />
             <Box whiteSpace="pre-wrap" outline="none" h="full" ref={setMount} />

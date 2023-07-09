@@ -23,11 +23,12 @@ export default function Story() {
       {!currentStory && (
         <NoStorySelectedIndicator />
       )}
-      {currentStory && storyContent && (
+      {currentStory && (
         <Editor
           story={currentStory}
           content={storyContent?.doc}
           onChange={onStoryChange}
+          key={currentStory.id}
         />
       )}
     </Flex>

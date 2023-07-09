@@ -29,6 +29,7 @@ export const StoryListItem = ({ story, isSidebarOpen }) => {
       cursor="pointer"
       borderBottom={isSidebarOpen ? undefined : "1px solid"}
       backgroundColor={preferences.selectedStoryId === story.id ? "InfoBackground" : undefined}
+      onClick={onClickStory}
     >
       <CardBody>
         <Stack

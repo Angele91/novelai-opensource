@@ -6,14 +6,16 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../db";
 import { useEffect } from "react";
 import { useRecoilState } from "recoil";
-import { storiesAtom } from "@/state/atoms/stories";
+import { currentStorySelector, storiesAtom } from "@/state/atoms/stories";
 import { StoryList } from "@/components/StoryList";
 import { StorySettings } from "@/components/StorySettings";
 import { storyContentsAtom } from "@/state/atoms/storyContents";
+import { Lorebook } from "@/components/Lorebook";
 
 export default function StoryLayout({ children }) {
   const [, setStories] = useRecoilState(storiesAtom);
   const [, setStoryContents] = useRecoilState(storyContentsAtom);
+  const [currentStory] = useRecoilState(currentStorySelector)
 
   const stories = useLiveQuery(
     async () => {
@@ -53,13 +55,16 @@ export default function StoryLayout({ children }) {
         )}
       </Sidebar>
       <Flex flex={1}>
+        <Lorebook />
         {children}
       </Flex>
-      <Sidebar side="right">
-        {({ isSidebarOpen }) => (
-          <StorySettings isSidebarOpen={isSidebarOpen} />
-        )}
-      </Sidebar>
+      {currentStory && (
+        <Sidebar side="right">
+          {({ isSidebarOpen }) => (
+            <StorySettings isSidebarOpen={isSidebarOpen} />
+          )}
+        </Sidebar>
+      )}
     </Flex>
   )
 }

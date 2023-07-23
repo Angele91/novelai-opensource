@@ -16,6 +16,7 @@ import { OptionsWidget } from "./OptionsWidget"
 import { ImageModels } from "@/lib/novelai/constants"
 import { Schema } from "prosemirror-model"
 import { ImageWidget } from "./ImageWidget"
+import { StoryContextManager } from "@/lib/processing/StoryContextManager"
 
 export const schema = new Schema({
   nodes: nodes,
@@ -25,6 +26,7 @@ export const schema = new Schema({
       attrs: {
         dataImg: {},
       },
+      inclusive: false,
       parseDOM: [{
         tag: 'div[data-img]',
         getAttrs: (dom) => ({
@@ -62,13 +64,25 @@ export const Editor = ({ story, content, onChange }) => {
   useEffect(() => {
     onChange?.(editorState.toJSON())
   }, [editorState])
-
-  const onRequestGeneration = (text) => {
+  
+  const onRequestGeneration = async (text) => {
     const currentTxt = text || editorState.doc.textContent;
     const currentPreset = presets.find(preset => preset.id === preferences.selectedPresetId);
 
+    const storyContextManager = new StoryContextManager(
+      story.lorebook,
+      story,
+      currentTxt,
+      story.memory,
+      story.authorNotes,
+    )
+
+    const finalPrompt = await storyContextManager.produce(
+      preferences.selectedModel,
+    )
+
     generateStory({
-      prompt: currentTxt,
+      prompt: finalPrompt,
       model: preferences.selectedModel,
       params: (currentPreset || first(presets)).parameters,
       onToken({ token }) {

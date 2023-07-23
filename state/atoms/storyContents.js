@@ -11,7 +11,7 @@ export const currentStoryContent = selector({
   get({ get }) {
     const currentStory = get(currentStorySelector);
 
-    if (!currentStory) return null;
+    if (!currentStory) return undefined;
 
     const storyContent = get(storyContentsAtom)?.find(content => content.parentId === currentStory.id);
 

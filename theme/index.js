@@ -5,6 +5,7 @@ import { Card } from "./components/Card";
 import { Input } from "./components/Input";
 import { Textarea } from "./components/Textarea";
 import { Select } from "./components/Select";
+import { Editable } from "./components/Editable";
 
 export const theme = extendTheme({
   colors: {},
@@ -15,5 +16,6 @@ export const theme = extendTheme({
     Input,
     Textarea,
     Select,
+    Editable,
   }
 });

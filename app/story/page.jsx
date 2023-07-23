@@ -1,13 +1,11 @@
 'use client'
 
-import { Editor } from "@/components/Editor";
 import { NoStorySelectedIndicator } from "@/components/NoStorySelectedIndicator";
-import getStoryContent from "@/lib/stories/getStoryContent";
+import { RemirrorEditor } from "@/components/RemirrorEditor";
 import updateStoryContent from "@/lib/stories/updateStoryContent";
 import { currentStorySelector } from "@/state/atoms/stories";
 import { currentStoryContent } from "@/state/atoms/storyContents";
 import { Flex } from "@chakra-ui/react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { useRecoilState } from "recoil";
 
 export default function Story() {
@@ -23,8 +21,8 @@ export default function Story() {
       {!currentStory && (
         <NoStorySelectedIndicator />
       )}
-      {currentStory && (
-        <Editor
+      {currentStory && storyContent && (
+        <RemirrorEditor
           story={currentStory}
           content={storyContent?.doc}
           onChange={onStoryChange}

@@ -1,4 +1,3 @@
-Create a function in Javascript (not typescript) that given a string and a array of entries with this shape:
 ```
 interface Entry {
     id: string;

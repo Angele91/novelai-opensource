@@ -48,23 +48,26 @@ export default function StoryLayout({ children }) {
   }, [setStoryContents, storyContents])
 
   return (
-    <Flex as="main" h="100vh">
-      <Sidebar>
-        {({ isSidebarOpen }) => (
-          <StoryList isSidebarOpen={isSidebarOpen} />
-        )}
-      </Sidebar>
+    <Flex as="main" h="100vh" flexDir="column">
       <Flex flex={1}>
-        <Lorebook />
-        {children}
-      </Flex>
-      {currentStory && (
-        <Sidebar side="right">
+        <Sidebar>
           {({ isSidebarOpen }) => (
-            <StorySettings isSidebarOpen={isSidebarOpen} />
+            <StoryList isSidebarOpen={isSidebarOpen} />
           )}
         </Sidebar>
-      )}
+        <Flex flex={1}>
+          <Lorebook />
+          {children}
+        </Flex>
+        {currentStory && (
+          <Sidebar side="right">
+            {({ isSidebarOpen }) => (
+              <StorySettings isSidebarOpen={isSidebarOpen} />
+            )}
+          </Sidebar>
+        )}
+      </Flex>
+
     </Flex>
   )
 }

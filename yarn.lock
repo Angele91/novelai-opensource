@@ -2759,6 +2759,11 @@
   resolved "https://registry.yarnpkg.com/@types/min-document/-/min-document-2.19.0.tgz#4f9919e789917c00de967a2c38fa8d234cbcd7d6"
   integrity sha512-lsYeSW1zfNqHTL1RuaOgfAhoiOWV1RAQDKT0BZ26z4Faz8llVIj1r1ablUo5QY6yzHMketuvu4+N0sv0eZpXTg==
 
+"@types/node@20.4.4":
+  version "20.4.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.4.4.tgz#c79c7cc22c9d0e97a7944954c9e663bcbd92b0cb"
+  integrity sha512-CukZhumInROvLq3+b5gLev+vgpsIqC2D0deQr/yS1WnxvmYLlJXZpaQrQiseMY+6xusl79E04UjWoqyr+t1/Ew==
+
 "@types/object.omit@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@types/object.omit/-/object.omit-3.0.0.tgz#0d31e1208eac8fe2ad5c9499a1016a8273bbfafc"
@@ -2923,6 +2928,11 @@
   dependencies:
     "@typescript-eslint/types" "5.60.1"
     eslint-visitor-keys "^3.3.0"
+
+"@webcontainer/api@^1.1.5":
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/@webcontainer/api/-/api-1.1.5.tgz#bb19832a75180c19d378aa4fb60678cec7450593"
+  integrity sha512-qMJyqO+A8+B8JKW/IW9KVQblAiEQwesq7ka6w8pgm6DXKWCQaPVOco4Zo7FxZ09OmBIX+lnXyfKbQzXiORLGJg==
 
 "@zag-js/dom-query@0.10.5":
   version "0.10.5"
@@ -4889,6 +4899,19 @@ lru-cache@^6.0.0:
   dependencies:
     yallist "^4.0.0"
 
+lua-in-js@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/lua-in-js/-/lua-in-js-2.2.1.tgz#b6914bd7c41508f40fa5f9e996730860554c92cd"
+  integrity sha512-mKNYDEaqYDEAwef0njaPrGi/4tpF+xww5czyZfF+DMWBe8czTgR5O3x8jL8VY6vg1i0Fohi6ZXKDDhYrLJq7IA==
+  dependencies:
+    luaparse "^0.3.1"
+    printj "^1.3.1"
+
+luaparse@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/luaparse/-/luaparse-0.3.1.tgz#0899fe5ff5ad3ccd3166632027d150b91291b330"
+  integrity sha512-b21h2bFEbtGXmVqguHogbyrMAA0wOHyp9u/rx+w6Yc9pW1t9YjhGUsp87lYcp7pFRqSWN/PhFkrdIqKEUzRjjQ==
+
 make-dir@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/make-dir/-/make-dir-3.1.0.tgz#415e967046b3a7f1d185277d84aa58203726a13f"
@@ -5007,6 +5030,11 @@ minizlib@^2.1.1:
   dependencies:
     minipass "^3.0.0"
     yallist "^4.0.0"
+
+mitt@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/mitt/-/mitt-3.0.1.tgz#ea36cf0cc30403601ae074c8f77b7092cdab36d1"
+  integrity sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==
 
 mkdirp@^1.0.3:
   version "1.0.4"
@@ -5397,6 +5425,11 @@ prelude-ls@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
+
+printj@^1.3.1:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/printj/-/printj-1.3.1.tgz#9af6b1d55647a1587ac44f4c1654a4b95b8e12cb"
+  integrity sha512-GA3TdL8szPK4AQ2YnOe/b+Y1jUFwmmGMMK/qbY7VcE3Z7FU8JstbKiKRzO6CIiAKPhTO8m01NoQ0V5f3jc4OGg==
 
 prismjs@~1.27.0:
   version "1.27.0"
@@ -6482,6 +6515,11 @@ typed-array-length@^1.0.4:
     call-bind "^1.0.2"
     for-each "^0.3.3"
     is-typed-array "^1.1.9"
+
+typescript@5.1.6:
+  version "5.1.6"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.1.6.tgz#02f8ac202b6dad2c0dd5e0913745b47a37998274"
+  integrity sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==
 
 unbox-primitive@^1.0.2:
   version "1.0.2"

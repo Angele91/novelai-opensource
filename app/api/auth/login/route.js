@@ -1,6 +1,4 @@
 import api from "@/lib/novelai"
-import { getKeystore } from "@/lib/novelai/auth";
-import { getEncryptionKey } from "@/lib/novelai/encryption";
 
 import { NextResponse } from 'next/server'
 

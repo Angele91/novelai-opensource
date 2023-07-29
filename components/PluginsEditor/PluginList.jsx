@@ -3,10 +3,28 @@ import deletePlugin from "@/lib/plugins/deletePlugin";
 import { Button, Card, Flex, IconButton, Text } from "@chakra-ui/react";
 import { BsPlay, BsTrash } from "react-icons/bs";
 
-const PluginList = ({ plugins, selectedPluginId, setSelectedPluginId }) => {
+const PluginList = ({
+  plugins,
+  selectedPluginId,
+  setSelectedPluginId,
+  selectedPlugin,
+}) => {
   const execute = async () => {
-    // wip
-  }
+    if (!selectedPlugin) return;
+    const worker = new Worker('/plugin-executor.js')
+    
+    worker.addEventListener('message', (event) => {
+      const { type: eventType, payload: eventPayload } = event.data;
+      console.log('Received from Worker:', eventType, eventPayload)
+    })
+
+    worker.postMessage({
+      type: "test_execute",
+      payload: {
+        code: selectedPlugin.code,
+      },
+    });
+  };
 
   return (
     <Flex flex={1} flexDir="column" p={2}>
@@ -22,20 +40,18 @@ const PluginList = ({ plugins, selectedPluginId, setSelectedPluginId }) => {
             cursor="pointer"
             alignItems="center"
             flexDir="row"
-            bgColor={selectedPluginId === plugin.id ? 'blue.500' : undefined}
+            bgColor={selectedPluginId === plugin.id ? "blue.500" : undefined}
             onClick={() => {
-              setSelectedPluginId(plugin.id)
+              setSelectedPluginId(plugin.id);
             }}
           >
-            <Text>
-              {plugin.name}
-            </Text>
+            <Text>{plugin.name}</Text>
             <Flex gap={2}>
               <IconButton
                 aria-label="Delete"
                 icon={<BsTrash />}
                 onClick={() => {
-                  deletePlugin(plugin.id)
+                  deletePlugin(plugin.id);
                 }}
               />
               <IconButton
@@ -51,16 +67,16 @@ const PluginList = ({ plugins, selectedPluginId, setSelectedPluginId }) => {
         <Button
           onClick={() => {
             createPlugin({
-              name: 'New Plugin',
-              code: '',
-            })
+              name: "New Plugin",
+              code: "",
+            });
           }}
         >
           Add
         </Button>
       </Flex>
     </Flex>
-  )
-}
+  );
+};
 
 export default PluginList;

@@ -1,21 +1,13 @@
-import { db } from "@/app/db";
 import { Flex } from "@chakra-ui/react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useState } from "react";
 import PluginList from "./PluginList";
 import PluginEditor from "./PluginEditor";
+import getPluginLiveState from "@/lib/plugins/getPluginLiveState";
 
 export const PluginsEditor = () => {
   const [selectedPluginId, setSelectedPluginId] = useState(null)
-  const plugins = useLiveQuery(async () => {
-    const plugins = await db.blocks.where({ type: 'plugin' }).toArray()
-    return plugins.map((plugin) => {
-      return {
-        id: plugin.id,
-        ...JSON.parse(plugin.data)
-      }
-    })
-  });
+  const plugins = useLiveQuery(getPluginLiveState());
 
   const selectedPlugin = plugins?.find((plugin) => plugin.id === selectedPluginId)
 
@@ -25,6 +17,7 @@ export const PluginsEditor = () => {
         plugins={plugins}
         selectedPluginId={selectedPluginId}
         setSelectedPluginId={setSelectedPluginId}
+        selectedPlugin={selectedPlugin}
       />
       <PluginEditor
         selectedPlugin={selectedPlugin}

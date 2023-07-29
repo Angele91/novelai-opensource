@@ -1,19 +1,23 @@
 import createStory from "@/lib/stories/createStory";
-import deleteStory from "@/lib/stories/deleteStory";
 import { preferencesAtom } from "@/state/atoms/preferences";
 import { storiesSelector } from "@/state/atoms/stories"
-import { Box, Button, Card, CardBody, Flex, IconButton, List, ListItem, Stack, StackDivider, Text, Tooltip } from "@chakra-ui/react"
-import { motion } from "framer-motion";
-import { BsBook, BsBookFill, BsPlus, BsTrash } from "react-icons/bs";
+import { Button, Flex, IconButton, List, Tooltip } from "@chakra-ui/react"
+import { BsPlus } from "react-icons/bs";
 import { useRecoilState } from "recoil"
 import { StoryListItem } from "./StoryListItem";
+import { useContext } from "react";
+import { PluginsContext } from "../PluginsEditor/PluginsProvider";
 
 export const StoryList = ({ isSidebarOpen }) => {
   const [stories] = useRecoilState(storiesSelector);
   const [preferences, setPreferences] = useRecoilState(preferencesAtom);
+  const { hook } = useContext(PluginsContext)
 
   const onCreateStory = async () => {
-    const createdStory = await createStory('New story');
+    const { story: createdStory } = await hook('CreateStory', {
+      story: await createStory('New Story'),
+    });
+
     setPreferences({
       ...preferences || {},
       selectedStoryId: createdStory,

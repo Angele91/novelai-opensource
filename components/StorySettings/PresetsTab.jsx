@@ -3,11 +3,11 @@ import { readFileAsJSON } from "@/lib/novelai/utils";
 import createPreset from "@/lib/presets/createPreset";
 import getPresets from "@/lib/presets/getPresets";
 import { preferencesAtom } from "@/state/atoms/preferences";
-import { Button, Flex, FormControl, FormHelperText, FormLabel, IconButton, Input, Select, Text, Tooltip } from "@chakra-ui/react"
+import { Button, Flex, FormControl, FormHelperText, FormLabel, IconButton, Input, Select, Tooltip } from "@chakra-ui/react"
 import { useLiveQuery } from "dexie-react-hooks";
 import { capitalize } from "lodash";
 import { useRef } from "react"
-import { BsBookFill, BsCloudArrowDown, BsCloudArrowUp } from "react-icons/bs";
+import { BsCloudArrowDown, BsCloudArrowUp } from "react-icons/bs";
 import { useRecoilState } from "recoil";
 
 export const PresetsTab = ({ isSidebarOpen }) => {
@@ -21,7 +21,7 @@ export const PresetsTab = ({ isSidebarOpen }) => {
   }
 
   const onExport = () => {
-    const selectedPreset = preset.find(
+    const selectedPreset = presets.find(
       (preset) => preset.id === preferences.selectedPresetId,
     )
 

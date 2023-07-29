@@ -6,13 +6,19 @@ import { Card, CardBody, Flex, Input, Textarea } from "@chakra-ui/react"
 import { EditorComponent, useChainedCommands, useCommands, useEditorEvent, useKeymap, useRemirrorContext } from "@remirror/react"
 import { useLiveQuery } from "dexie-react-hooks"
 import { first } from "lodash"
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { useRecoilState } from "recoil"
 import { OptionsPanel } from "./OptionsPanel"
 import { ImageModels } from "@/lib/novelai/constants"
 import { ImagePanel } from "./ImagePanel"
 import { TextSelection } from "prosemirror-state"
 import { StoryContextManager } from "@/lib/processing/StoryContextManager"
+import { PluginsContext } from "../PluginsEditor/PluginsProvider"
+import Queue from 'queue'
+
+const tokenQueue = new Queue({ results: [] })
+tokenQueue.concurrency = 1
+tokenQueue.autostart = true
 
 export const EditorContainer = ({ story }) => {
   const presets = useLiveQuery(async () => getPresets(), [])
@@ -22,6 +28,8 @@ export const EditorContainer = ({ story }) => {
   const { insertText } = useCommands();
   const chainableCommands = useChainedCommands()
   const { getState } = useRemirrorContext();
+
+  const { hook } = useContext(PluginsContext)
 
   const onRequestGeneration = async (text) => {
     const state = getState();
@@ -36,17 +44,29 @@ export const EditorContainer = ({ story }) => {
       story.authorNotes ?? '',
     )
 
-    const finalPrompt = await storyContextManager.produce(
+    const producedText = await storyContextManager.produce(
       preferences.selectedModel,
     )
 
+    const { producedText: finalPrompt } = await hook('StoryGenerationStarted', {
+      fullPrompt: producedText,
+      currentPrompt: currentTxt,
+      model: preferences.selectedModel,
+    })
+
     generateStory({
-      prompt: finalPrompt,
+      prompt: finalPrompt ?? producedText,
       model: preferences.selectedModel,
       params: (currentPreset || first(presets)).parameters,
       onToken({ token }) {
-        insertText(token)
-      }
+        tokenQueue.push(async () => {
+          const finalToken = await hook('TokenGenerated', {
+            token,
+          })
+
+          insertText(finalToken?.token ?? token)
+        })
+      },
     })
   }
 

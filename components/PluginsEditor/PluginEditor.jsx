@@ -23,7 +23,7 @@ const PluginEditor = ({ selectedPlugin }) => {
         <Flex gap={2} key={selectedPlugin.id}>
           <Editor
             height="90vh"
-            defaultLanguage="lua"
+            defaultLanguage="javascript"
             defaultValue={selectedPlugin.code}
             theme="vs-dark"
             onChange={(value) => {

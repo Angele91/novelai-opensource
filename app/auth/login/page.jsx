@@ -12,15 +12,13 @@ import {
   chakra,
   useToast,
 } from "@chakra-ui/react";
-import axios from "axios";
 import { useFormik } from "formik";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import * as Yup from "yup";
 
 const validationSchema = Yup.object().shape({
-  email: Yup.string().email("Invalid email").required("Required"),
-  password: Yup.string().required("Required"),
+  persistentAPIToken: Yup.string().required('Required'),
 })
 
 export default function Login() {
@@ -28,16 +26,11 @@ export default function Login() {
   const toast = useToast();
   const router = useRouter();
 
-  const onSubmit = async ({ email, password }) => {
+  const onSubmit = async ({ persistentAPIToken }) => {
     setIsLoading(true);
 
     try {
-      const { data } = await axios.post('/api/auth/login', {
-        email,
-        password
-      });
-
-      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('accessToken', persistentAPIToken);
       router.push('/');
     } catch (error) {
       toast({
@@ -59,8 +52,7 @@ export default function Login() {
     errors,
   } = useFormik({
     initialValues: {
-      email: "",
-      password: "",
+      persistentAPIToken: '',
     },
     onSubmit: onSubmit,
     validationSchema,
@@ -88,33 +80,17 @@ export default function Login() {
         >
           <FormControl>
             <FormLabel>
-              Email
-            </FormLabel>
-            <Input
-              type="email"
-              id="email"
-              onChange={handleChange}
-              onBlur={handleBlur}
-            />
-            {errors.email && (
-              <FormErrorMessage>
-                {errors.email}
-              </FormErrorMessage>
-            )}
-          </FormControl>
-          <FormControl>
-            <FormLabel>
-              Password
+              Persistent API Token
             </FormLabel>
             <Input
               type="password"
-              id="password"
+              id="persistentAPIToken"
               onChange={handleChange}
               onBlur={handleBlur}
             />
-            {errors.password && (
+            {errors.persistentAPIToken && (
               <FormErrorMessage>
-                {errors.password}
+                {errors.persistentAPIToken}
               </FormErrorMessage>
             )}
           </FormControl>

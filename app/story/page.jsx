@@ -12,8 +12,8 @@ export default function Story() {
   const [currentStory] = useRecoilState(currentStorySelector);
   const [storyContent] = useRecoilState(currentStoryContent)
 
-  const onStoryChange = (newStory) => {
-    updateStoryContent(currentStory.id, newStory);
+  const onStoryChange = async (newStory) => {
+    await updateStoryContent(currentStory.id, newStory);
   }
   
   return (

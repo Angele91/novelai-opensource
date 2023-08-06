@@ -1,7 +1,11 @@
+/* eslint-disable no-undef */
 self.state = {
   eventHandlers: [],
   hooks: [],
+  loadedPlugins: [],
 }
+
+const channel = new BroadcastChannel('plugin-executor');
 
 self.importScripts('https://cdn.jsdelivr.net/npm/acorn/dist/acorn.js');
 self.importScripts('https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js');
@@ -16,6 +20,9 @@ function walk(node, callback) {
 }
 
 function onLoadPlugin(plugin_name, plugin_code, message_id) {
+  if (
+    self.state.loadedPlugins.includes(plugin_name)
+  ) return;
   // eslint-disable-next-line no-undef
   const ast = acorn.parse(plugin_code, { ecmaVersion: 2020, sourceType: 'plugin' })
 
@@ -26,11 +33,12 @@ function onLoadPlugin(plugin_name, plugin_code, message_id) {
   walk(ast, (node) => {
     if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
       const functionName = node.id && node.id.name;
-      const functionBody = plugin_code.substring(node.body.start, node.body.end);
+      const functionCode = plugin_code.substring(node.start, node.end);
 
       const obj = {
         name: functionName.replace('on', '').replace('hookInto', ''),
-        body: functionBody,
+        params: node.params,
+        body: functionCode,
         plugin_name,
       };
 
@@ -41,10 +49,26 @@ function onLoadPlugin(plugin_name, plugin_code, message_id) {
       if (functionName.startsWith('hookInto')) {
         self.state.hooks.push(obj);
       }
+
+      if (functionName === 'config') {
+        const fn = new Function(`return (${functionCode})`)()
+        const configObject = fn()
+        console.debug('[Worker]', 'onLoadPlugin', 'configObject', configObject)
+        channel.postMessage({
+          to: 'client',
+          type: 'plugin_config',
+          payload: {
+            plugin_name,
+            config: configObject,
+            message_id,
+          }
+        });
+      }
     }
   })
 
-  self.postMessage({
+  return ({
+    to: 'client',
     type: 'plugin_loaded',
     payload: {
       plugin_name,
@@ -54,10 +78,15 @@ function onLoadPlugin(plugin_name, plugin_code, message_id) {
 }
 
 function unloadPlugin(plugin_name, message_id) {
+  if (
+    !self.state.loadedPlugins.includes(plugin_name)
+  ) return;
+
   self.state.eventHandlers = self.state.eventHandlers.filter(eventHandler => eventHandler.plugin_name !== plugin_name)
   self.state.hooks = self.state.hooks.filter(hook => hook.plugin_name !== plugin_name)
 
-  self.postMessage({
+  return ({
+    to: 'client',
     type: 'plugin_unloaded',
     payload: {
       plugin_name,
@@ -74,16 +103,19 @@ function onHook(hookName, firstPayload, message_id) {
 
   let result = hooks.reduce((acc, hook) => {
     const { body } = hook
-    const fn = new Function('payload', body)
+    const fn = new Function(`return (${body})`)()
     return fn(acc)
   }, firstPayload.payload)
 
-  // eslint-disable-next-line no-undef
-  if (_.isEqual(result, firstPayload.payload)) {
+  if (
+    _.isEqual(result, firstPayload.payload)
+    || hooks.length === 0
+  ) {
     result = null
   }
 
-  self.postMessage({
+  return ({
+    to: 'client',
     type: 'hook_result',
     payload: {
       hook_name: hookName,
@@ -98,16 +130,19 @@ function onEvent(eventName, payload, message_id) {
 
   let result = eventHandlers.reduce((acc, eventHandler) => {
     const { body } = eventHandler
-    const fn = new Function('payload', body)
+    const fn = new Function(`return (${body})`)()
     return fn(acc)
   }, payload.payload)
 
-  // eslint-disable-next-line no-undef
-  if (_.isEqual(result, payload)) {
+  if (
+    _.isEqual(result, payload)
+    || eventHandlers.length === 0
+  ) {
     result = null
   }
 
-  self.postMessage({
+  return ({
+    to: 'client',
     type: 'event_handled',
     payload: {
       event_name: eventName,
@@ -117,28 +152,42 @@ function onEvent(eventName, payload, message_id) {
   });
 }
 
-self.addEventListener('message', (messageEvent) => {
+channel.addEventListener('message', (messageEvent) => {
   const { data } = messageEvent;
   const { type, payload } = data
 
-  const { plugin_name, plugin_code, hook_name, event_name, message_id } = payload
+  if (!payload) return;
+
+  const { plugin_name, plugin_code, hook_name, event_name, message_id, to } = payload
+
+  if (to === 'client') {
+    return;
+  }
 
   console.debug('[Worker]', 'onmessage', type, payload, message_id)
 
+  let result = null;
+
   switch (type) {
     case 'load_plugin':
-      onLoadPlugin(plugin_name, plugin_code, message_id)
-      return
+      result = onLoadPlugin(plugin_name, plugin_code, message_id)
+      break;
     case 'hook':
-      onHook(hook_name, payload, message_id)
-      return
+      result = onHook(hook_name, payload, message_id)
+      break;
     case 'event':
-      onEvent(event_name, payload, message_id)
-      return
+      result = onEvent(event_name, payload, message_id)
+      break;
     case 'unload_plugin':
-      unloadPlugin(plugin_name, message_id)
-      return
+      result = unloadPlugin(plugin_name, message_id)
+      break;
   }
 
-  self.postMessage(`Unknown instruction: ${JSON.stringify(data, null, 2)}`);
+  if (!result) {
+    return;
+  }
+
+  console.debug('[Worker]', 'onmessage', 'result', result)
+
+  channel.postMessage(result);
 });

@@ -1,7 +1,7 @@
 import { Card, CardBody, IconButton, Tooltip } from "@chakra-ui/react";
 import { usePositioner, useRemirrorContext } from "@remirror/react";
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { BsImage } from "react-icons/bs";
 
 

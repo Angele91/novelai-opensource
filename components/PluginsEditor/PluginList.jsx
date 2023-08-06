@@ -5,6 +5,7 @@ import { BsPlay, BsTrash } from "react-icons/bs";
 
 const PluginList = ({
   plugins,
+  onDeletePlugin,
   selectedPluginId,
   setSelectedPluginId,
   selectedPlugin,
@@ -26,15 +27,36 @@ const PluginList = ({
     });
   };
 
+  const handleCreatePlugin = () => {
+    createPlugin({
+      name: "New Plugin",
+      code: "",
+    });
+  };
+
+  const handleDeletePlugin = (pluginId) => {
+    (onDeletePlugin ?? deletePlugin)(pluginId);
+  };
+
+  const handleSelectPlugin = (pluginId) => {
+    setSelectedPluginId(pluginId);
+  };
+
   return (
-    <Flex flex={1} flexDir="column" p={2}>
+    <Flex
+      flex={1}
+      flexDir="column"
+      p={2}
+      data-testid="plugin-list"
+    >
       <Flex flex={1} flexDir="column" gap={2}>
         {plugins?.map((plugin) => (
           <Card
-            key={plugin.id}
+            key={plugin.name}
             h={12}
             py={2}
             px={8}
+            role="listitem"
             display="flex"
             justify="space-between"
             cursor="pointer"
@@ -42,7 +64,7 @@ const PluginList = ({
             flexDir="row"
             bgColor={selectedPluginId === plugin.id ? "blue.500" : undefined}
             onClick={() => {
-              setSelectedPluginId(plugin.id);
+              handleSelectPlugin(plugin.id);
             }}
           >
             <Text>{plugin.name}</Text>
@@ -50,8 +72,9 @@ const PluginList = ({
               <IconButton
                 aria-label="Delete"
                 icon={<BsTrash />}
-                onClick={() => {
-                  deletePlugin(plugin.id);
+                onClick={(event) => {
+                  handleDeletePlugin(plugin.id);
+                  event.stopPropagation();
                 }}
               />
               <IconButton
@@ -64,16 +87,7 @@ const PluginList = ({
         ))}
       </Flex>
       <Flex flexDir="column">
-        <Button
-          onClick={() => {
-            createPlugin({
-              name: "New Plugin",
-              code: "",
-            });
-          }}
-        >
-          Add
-        </Button>
+        <Button onClick={handleCreatePlugin}>Add</Button>
       </Flex>
     </Flex>
   );

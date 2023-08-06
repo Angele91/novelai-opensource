@@ -13,13 +13,15 @@ const ColorModeSwitch = ({ fixed }) => {
       borderRadius="md"
       boxShadow="lg"
       align="center"
+      data-testid="color-mode-switch-container"
     >
       <Switch
         isChecked={colorMode === 'dark'}
         colorScheme={colorMode === 'dark' ? 'blue' : 'yellow'}
         onChange={toggleColorMode}
+        data-testid="color-mode-switch"
       />
-      {colorMode === 'dark' ? <BsFillMoonStarsFill fontSize="24px" color="white" /> : <BsFillSunFill fontSize="24px" color="black" />}
+      {colorMode === 'dark' ? <BsFillMoonStarsFill fontSize="24px" color="white" data-testid="moon-icon" /> : <BsFillSunFill fontSize="24px" color="black" data-testid="sun-icon" />}
     </Flex>
   )
 }

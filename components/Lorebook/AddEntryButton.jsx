@@ -1,9 +1,10 @@
 import { Menu, MenuButton, MenuItem, MenuList } from "@chakra-ui/react";
+import { noop } from "lodash";
 
 export const AddEntryButton = ({
   as,
   children,
-  onAddChild,
+  onAddChild = noop,
   ...rest
 }) => (
   <Menu>

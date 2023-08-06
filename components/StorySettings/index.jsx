@@ -1,11 +1,9 @@
-import { Button, Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react"
+import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@chakra-ui/react"
 import { PresetsTab } from "./PresetsTab";
 import { MemoryTab } from "./MemoryTab";
-import { useRouter } from "next/navigation";
+import PluginsTab from "./PluginsTab";
 
 export const StorySettings = ({ isSidebarOpen }) => {
-  const router = useRouter()
-
   return (
     <Tabs>
       {isSidebarOpen && (
@@ -24,11 +22,7 @@ export const StorySettings = ({ isSidebarOpen }) => {
           <MemoryTab isSidebarOpen={isSidebarOpen} />
         </TabPanel>
         <TabPanel>
-          <Button variant="outline" onClick={() => {
-            router.push('/plugins')
-          }}>
-            Open Plugin Editor
-          </Button>
+         <PluginsTab />
         </TabPanel>
       </TabPanels>
     </Tabs>

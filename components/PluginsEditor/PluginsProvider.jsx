@@ -1,8 +1,11 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import getPluginLiveState from "../../lib/plugins/getPluginLiveState";
-import { v4 } from "uuid";
-import { Promise } from "core-js";
-import { useEffect, createContext, useRef, useState } from "react";
+import { useEffect, createContext, useRef, useState, useMemo, useCallback } from "react";
+import loadPlugins from "@/lib/plugins/loadPlugins";
+import executeHook from "@/lib/plugins/executeHook";
+import triggerEvent from "@/lib/plugins/triggerEvent";
+
+const channel = new BroadcastChannel('plugin-executor');
 
 export const PluginsContext = createContext({
   plugins: [],
@@ -10,114 +13,85 @@ export const PluginsContext = createContext({
   hook: (hookName, payload) => null,
   // eslint-disable-next-line no-unused-vars
   event: (eventName, payload) => null,
+  configs: [],
+  onSignal: null,
 })
-
-const sendMessageToWorker = ({
-  type,
-  payload,
-  successType,
-  worker,
-}) => {
-  const messageId = v4()
-
-  return new Promise((resolve, reject) => {
-    worker.addEventListener('message', (event) => {
-      const { type: eventType, payload: eventPayload } = event.data;
-      console.debug('Received from Worker:', event)
-      if (eventType === successType && eventPayload?.message_id === messageId) {
-        resolve(eventPayload.result)
-      } else if (payload.eventMessageId === messageId) {
-        reject(eventPayload)
-      }
-    })
-
-    const messageToBeSent = {
-      type,
-      payload: {
-        ...payload,
-        message_id: messageId,
-      },
-    }
-
-    worker.postMessage(messageToBeSent);
-  })
-}
 
 export const PluginsProvider = ({ children }) => {
   const [initialized, setInitialized] = useState(false);
+  const [pluginConfigs, setPluginConfigs] = useState([]);
   const plugins = useLiveQuery(getPluginLiveState());
   const workerRef = useRef(null);
 
-  const hook = async (hookName, payload) => {
-    if (!workerRef.current) return payload;
-
-    console.debug(`Hook ${hookName} called with payload`, payload)
-
-    const result = await sendMessageToWorker({
-      type: "hook",
-      successType: "hook_result",
-      worker: workerRef.current,
-      payload: {
-        hook_name: hookName,
-        payload,
-      },
-    })
-
-    console.debug(`Hook ${hookName} returned`, result)
-
+  const hook = useCallback(async (hookName, payload) => {
+    if (!workerRef.current) throw new Error('There is no plugin worker available');
+    console.debug(`Executing hook ${hookName} with worker`, workerRef.current.active)
+    const result = await executeHook(hookName, payload, workerRef.current.active);
+    console.debug(`Hook ${hookName} executed with result`, result)
     return result;
-  }
+  }, [])
 
-
-  const event = (eventName, payload) => {
-    if (!workerRef.current) return;
-
-    return sendMessageToWorker({
-      type: "event",
-      successType: "event_handled",
-      worker: workerRef.current,
-      payload: {
-        event_name: eventName,
-        payload,
-      },
-    })
-  }
+  const event = useCallback(async (eventName, payload) => {
+    if (!workerRef.current) throw new Error('There is no plugin worker available');
+    console.debug(`Triggering event ${eventName}`)
+    const result = await triggerEvent(eventName, payload, workerRef.current.active);
+    console.debug(`Event ${eventName} triggered with result`, result)
+  }, [])
 
   useEffect(() => {
-    const loadPlugins = async () => {
-      console.debug('Loading plugins')
-      workerRef.current = new Worker('/plugin-executor.js')
-      await Promise.all(plugins.map(async (plugin) => {
-        const { code, name } = plugin;
-        await sendMessageToWorker({
-          type: "load_plugin",
-          successType: "plugin_loaded",
-          worker: workerRef.current,
-          payload: {
-            plugin_name: name,
-            plugin_code: code,
-          },
-        })
+    const loadWorker = async () => {
+      const workerRegistration = await navigator.serviceWorker.register("/plugin-executor.js");
+      workerRef.current = workerRegistration;
+      console.debug('Worker loaded')
+      await loadPlugins(plugins ?? [], workerRef.current.active, event);
+      setInitialized(true);
+    };
 
-        await event('PluginLoaded', { name })
-        console.debug(`Loaded plugin ${name}`)
+    if (!initialized && plugins !== undefined) {
+      loadWorker();
 
-        setInitialized(true)
-      }))
+      channel.addEventListener('message', async (event) => {
+        console.debug('Message received', event.data)
+        const { type, payload, to } = event.data;
+        if (to !== 'client') return;
+
+        switch(type) {
+          case 'plugin_config':
+            setPluginConfigs((prev) => [...prev, {
+              config: payload.config,
+              name: payload.plugin_name,
+            }]);
+            console.debug('Plugin config received', payload);
+            break;
+        }
+      });
     }
+  }, [plugins, initialized, event])
 
-    if (plugins?.length > 0 && !initialized) {
-      loadPlugins()
-    }
-  }, [plugins, initialized])
-  
+  const onSignal = useCallback(async (signalName, payload) => {
+    if (!workerRef.current) throw new Error('There is no plugin worker available');
+    console.debug(`Triggering signal ${signalName}`)
+    channel.postMessage({
+      to: 'worker',
+      type: 'signal',
+      payload: {
+        signalName,
+        payload,
+      },
+    });
+  }, []);
+
+  const value = useMemo(() => ({
+    plugins,
+    configs: pluginConfigs,
+    hook,
+    event,
+    onSignal,
+  }), [plugins, pluginConfigs, hook, event, onSignal]);
+
   return (
     <PluginsContext.Provider
-      value={{
-        plugins,
-        hook,
-        event,
-      }}
+      value={value}
     >
       {children}
     </PluginsContext.Provider>

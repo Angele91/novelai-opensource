@@ -1,6 +1,6 @@
 'use client'
 
-const { default: Dexie } = require("dexie");
+import Dexie from 'dexie';
 
 const db = new Dexie('novelai-opensource-db')
 db.version(2).stores({

@@ -2,7 +2,7 @@ import { generateImage, generateStory } from "@/lib/novelai/generation"
 import getPresets from "@/lib/presets/getPresets"
 import updateStory from "@/lib/stories/updateStory"
 import { preferencesAtom } from "@/state/atoms/preferences"
-import { Card, CardBody, Flex, Input, Textarea } from "@chakra-ui/react"
+import { Card, CardBody, Flex, Input } from "@chakra-ui/react"
 import { EditorComponent, useChainedCommands, useCommands, useEditorEvent, useKeymap, useRemirrorContext } from "@remirror/react"
 import { useLiveQuery } from "dexie-react-hooks"
 import { first } from "lodash"
@@ -22,7 +22,6 @@ tokenQueue.autostart = true
 
 export const EditorContainer = ({ story }) => {
   const presets = useLiveQuery(async () => getPresets(), [])
-  const [prompt, setPrompt] = useState('')
   const [preferences] = useRecoilState(preferencesAtom)
   const [imageOpened, setImageOpened] = useState(null)
   const { insertText } = useCommands();
@@ -86,19 +85,6 @@ export const EditorContainer = ({ story }) => {
         imageId: fileIds[0],
       }, TextSelection.create(state.doc, state.selection.from, state.selection.to))
       .run()
-  }
-
-  const onPromptSent = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      const state = getState();
-      const promptText = prompt.trim()
-      if (promptText.length > 0) {
-        insertText(promptText)
-        setPrompt('')
-        onRequestGeneration(`${state.doc.textContent}${promptText}}`)
-      }
-    }
   }
 
   const onEditorBlur = () => {    
@@ -177,12 +163,6 @@ export const EditorContainer = ({ story }) => {
           )}
         </CardBody>
       </Card>
-      <Textarea
-        value={prompt}
-        onChange={({ target: { value } }) => setPrompt(value)}
-        placeholder="Type your prompt here."
-        onKeyDown={onPromptSent}
-      />
     </Flex>
   )
 }

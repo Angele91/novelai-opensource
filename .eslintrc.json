@@ -3,6 +3,11 @@
   "rules": {
     "no-unused-expressions": "error",
     "no-undef": "error",
-    "no-unused-vars": "error"
-  }
+    "no-unused-vars": "error",
+    "jest/no-disabled-tests": "off"
+  },
+  "env": {
+    "jest": true
+  },
+  "plugins": []
 }

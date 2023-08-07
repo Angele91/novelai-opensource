@@ -4,45 +4,42 @@ import { cloneElement, createElement } from 'react';
 
 const getElementFromConfig = (config, onSignal) => {
   if (!config) return null;
-  const { type, children, ...otherProps } = config;
-  const Component = chakra[type] ?? type;
+  const { type, collect, children, ...otherProps } = config;
+  const Component = typeof type === 'string' && (chakra[type] ?? type);
+
+  if (!Component) return null;
 
   const props = Object.entries(otherProps).reduce((acc, [key, value]) => {
     if (typeof value === 'string' && value.startsWith('signal:')) {
       const signalName = value.replace('signal:', '');
       return Object.assign(acc, {
-        [key]: (payload) => onSignal?.(signalName, payload),
+        [key]: () => {
+          const values = collect?.reduce((acc, collectKey) => {
+            const el = document.getElementById(collectKey);
+            if (!el) return acc;
+
+            return Object.assign(acc, {
+              [collectKey]: el.value,
+            });
+          }, {});
+
+          onSignal?.(signalName, values)
+        },
       });
     }
 
     if (key.startsWith('prop:')) {
       const propName = key.replace('prop:', '');
-      return Object.assign(acc, {
+      acc = Object.assign(acc, {
         [propName]: value,
       });
-    }
-
-    if (key === 'onClick' && acc.type === 'Button' && acc['prop:type'] === 'submit') {
-      return Object.assign(acc, {
-        onClick: (evt) => {
-          evt.preventDefault();
-          value(evt);
-        },
-      });
-    }
-
-    if (key === 'prop:type' && value === 'submit') {
-      return Object.assign(acc, {
-        onClick: (evt) => evt.preventDefault(),
-      });
+      key = propName;
     }
 
     return Object.assign(acc, {
       [key]: value,
     });
   }, {});
-
-  if (!Component) return null;
 
   const childrenIsString = typeof children === 'string';
 

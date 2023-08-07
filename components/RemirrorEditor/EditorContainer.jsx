@@ -47,7 +47,7 @@ export const EditorContainer = ({ story }) => {
       preferences.selectedModel,
     )
 
-    const { producedText: finalPrompt } = await hook('StoryGenerationStarted', {
+    const finalPrompt = await hook('StoryGenerationStarted', {
       fullPrompt: producedText,
       currentPrompt: currentTxt,
       model: preferences.selectedModel,

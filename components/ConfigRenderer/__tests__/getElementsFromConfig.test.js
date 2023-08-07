@@ -28,8 +28,8 @@ describe('getElementsFromConfig', () => {
     const onSignal = jest.fn();
     const config = { type: 'Button', onClick: 'signal:click' };
     const result = getElementFromConfig(config, onSignal);
-    result.props.onClick('payload');
-    expect(onSignal).toHaveBeenCalledWith('click', 'payload');
+    result.props.onClick();
+    expect(onSignal).toHaveBeenCalledWith('click', undefined);
   });
 
   it('should map prop:type=\'submit\' to onClick that prevents default event behavior', () => {
@@ -40,5 +40,14 @@ describe('getElementsFromConfig', () => {
       result.props.onClick(evt);
       expect(evt.preventDefault).toHaveBeenCalled();
     }
+  });
+
+  it('should return null when config is falsy', () => {
+    expect(getElementFromConfig(null)).toBeNull();
+  });
+
+  it('should return null when type is not a string or a valid chakra component', () => {
+    const config = { type: 123 };
+    expect(getElementFromConfig(config)).toBeNull();
   });
 });

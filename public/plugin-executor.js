@@ -1,11 +1,11 @@
-/* eslint-disable no-undef */
 self.state = {
   eventHandlers: [],
   hooks: [],
   loadedPlugins: [],
+  signalHandlers: {},
 }
 
-const channel = new BroadcastChannel('plugin-executor');
+self.pluginState = {}
 
 self.importScripts('https://cdn.jsdelivr.net/npm/acorn/dist/acorn.js');
 self.importScripts('https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js');
@@ -19,30 +19,37 @@ function walk(node, callback) {
   }
 }
 
-function onLoadPlugin(plugin_name, plugin_code, message_id) {
+function onLoadPlugin({
+  name,
+  code,
+  state,
+  message_id,
+}) {
   if (
-    self.state.loadedPlugins.includes(plugin_name)
+    self.state.loadedPlugins.includes(name)
   ) return;
-  // eslint-disable-next-line no-undef
-  const ast = acorn.parse(plugin_code, { ecmaVersion: 2020, sourceType: 'plugin' })
+
+  const ast = self.acorn.parse(code, { ecmaVersion: 2020, sourceType: 'plugin' })
 
   // lets make sure we dont duplicate the same plugin
-  self.state.eventHandlers = self.state.eventHandlers.filter(eventHandler => eventHandler.plugin_name !== plugin_name)
-  self.state.hooks = self.state.hooks.filter(hook => hook.plugin_name !== plugin_name)
+  self.state.eventHandlers = self.state.eventHandlers.filter(eventHandler => eventHandler.name !== name)
+  self.state.hooks = self.state.hooks.filter(hook => hook.name !== name)
+  self.pluginState[name] = state
 
   walk(ast, (node) => {
     if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {
       const functionName = node.id && node.id.name;
-      const functionCode = plugin_code.substring(node.start, node.end);
+      const functionCode = code.substring(node.start, node.end);
 
       const obj = {
         name: functionName.replace('on', '').replace('hookInto', ''),
         params: node.params,
         body: functionCode,
-        plugin_name,
+        plugin_name: name,
       };
 
       if (functionName.startsWith('on')) {
+        console.log('[Worker]', 'onLoadPlugin', 'on', obj)
         self.state.eventHandlers.push(obj);
       }
 
@@ -50,15 +57,23 @@ function onLoadPlugin(plugin_name, plugin_code, message_id) {
         self.state.hooks.push(obj);
       }
 
+      if (functionName.startsWith('signal')) {
+        const signalName = functionName.replace('signal', '')
+        self.state.signalHandlers[signalName] = [
+          ...self.state.signalHandlers[signalName] || [],
+          obj,
+        ]
+      }
+
       if (functionName === 'config') {
         const fn = new Function(`return (${functionCode})`)()
         const configObject = fn()
         console.debug('[Worker]', 'onLoadPlugin', 'configObject', configObject)
-        channel.postMessage({
+        self.postMessage({
           to: 'client',
           type: 'plugin_config',
           payload: {
-            plugin_name,
+            plugin_name: name,
             config: configObject,
             message_id,
           }
@@ -71,7 +86,7 @@ function onLoadPlugin(plugin_name, plugin_code, message_id) {
     to: 'client',
     type: 'plugin_loaded',
     payload: {
-      plugin_name,
+      plugin_name: name,
       message_id,
     }
   });
@@ -108,7 +123,7 @@ function onHook(hookName, firstPayload, message_id) {
   }, firstPayload.payload)
 
   if (
-    _.isEqual(result, firstPayload.payload)
+    self._.isEqual(result, firstPayload.payload)
     || hooks.length === 0
   ) {
     result = null
@@ -135,7 +150,7 @@ function onEvent(eventName, payload, message_id) {
   }, payload.payload)
 
   if (
-    _.isEqual(result, payload)
+    self._.isEqual(result, payload)
     || eventHandlers.length === 0
   ) {
     result = null
@@ -152,13 +167,56 @@ function onEvent(eventName, payload, message_id) {
   });
 }
 
-channel.addEventListener('message', (messageEvent) => {
+function onSignal(signalName, payload, message_id) {
+  const signalHandlers = self.state.signalHandlers[signalName] || []
+
+  let result = signalHandlers.reduce((acc, signalHandler) => {
+    const { body } = signalHandler
+    const fn = new Function(`return (${body})`)()
+    return fn(acc)
+  }, payload.payload)
+
+  if (
+    self._.isEqual(result, payload)
+    || signalHandlers.length === 0
+  ) {
+    result = null
+  }
+
+  return ({
+    to: 'client',
+    type: 'signal_handled',
+    payload: {
+      signal_name: signalName,
+      result,
+      message_id,
+    }
+  });
+}
+
+self.getStateValue = (plugin, key) => {
+  return self._.get(self.pluginState, `${plugin}.${key}`)
+}
+
+self.setStateValue = (plugin, key, value) => {
+  self.pluginState = self._.set(self.pluginState, `${plugin}.${key}`, value)
+  self.postMessage({
+    to: 'client',
+    type: 'plugin_state',
+    payload: {
+      plugin_name: plugin,
+      state: self.pluginState[plugin],
+    }
+  });
+}
+
+self.addEventListener('message', (messageEvent) => {
   const { data } = messageEvent;
   const { type, payload } = data
 
   if (!payload) return;
 
-  const { plugin_name, plugin_code, hook_name, event_name, message_id, to } = payload
+  const { plugin_name, plugin_code, plugin_state, hook_name, event_name, message_id, signal_name, to } = payload
 
   if (to === 'client') {
     return;
@@ -170,13 +228,21 @@ channel.addEventListener('message', (messageEvent) => {
 
   switch (type) {
     case 'load_plugin':
-      result = onLoadPlugin(plugin_name, plugin_code, message_id)
+      result = onLoadPlugin({
+        name: plugin_name,
+        code: plugin_code,
+        state: plugin_state,
+        message_id,
+      })
       break;
     case 'hook':
       result = onHook(hook_name, payload, message_id)
       break;
     case 'event':
       result = onEvent(event_name, payload, message_id)
+      break;
+    case 'signal':
+      result = onSignal(signal_name, payload)
       break;
     case 'unload_plugin':
       result = unloadPlugin(plugin_name, message_id)
@@ -189,5 +255,5 @@ channel.addEventListener('message', (messageEvent) => {
 
   console.debug('[Worker]', 'onmessage', 'result', result)
 
-  channel.postMessage(result);
+  self.postMessage(result);
 });
